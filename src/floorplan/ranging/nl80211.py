@@ -7,13 +7,9 @@ commands: device capability query, FTM initiation, and result retrieval.
 
 from __future__ import annotations
 
-import ctypes
-import ctypes.util
 import logging
-import struct
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +103,7 @@ class FTMResult:
     burst_index: int
     num_ftmr_attempts: int
     num_ftmr_successes: int
-    fail_reason: Optional[FTMFailReason] = None
+    fail_reason: FTMFailReason | None = None
 
 
 class NL80211Interface:
@@ -121,8 +117,8 @@ class NL80211Interface:
 
     def __init__(self, interface: str = "wlan0") -> None:
         self.interface = interface
-        self._ifindex: Optional[int] = None
-        self._phy_index: Optional[int] = None
+        self._ifindex: int | None = None
+        self._phy_index: int | None = None
         self._nl_socket: object = None
 
     def _get_ifindex(self) -> int:
@@ -152,7 +148,6 @@ class NL80211Interface:
     def connect(self) -> None:
         """Establish netlink connection for nl80211 communication."""
         try:
-            from pyroute2 import NDB
             from pyroute2.netlink.nl80211 import NL80211
 
             self._nl_socket = NL80211()
@@ -216,7 +211,7 @@ class NL80211Interface:
         asap: bool = True,
         preamble: int = NL80211_PREAMBLE_HT,
         bandwidth: int = NL80211_CHAN_WIDTH_20,
-    ) -> Optional[list[FTMResult]]:
+    ) -> list[FTMResult] | None:
         """Initiate an FTM measurement to a target device.
 
         Args:
@@ -265,7 +260,7 @@ class NL80211Interface:
                 },
             }
             # Send the measurement request
-            msg = self._nl_socket.put(
+            self._nl_socket.put(
                 NL80211_CMD_START_PEER_MEASUREMENT,
                 attrs=[
                     ("NL80211_ATTR_IFINDEX", ifindex),
@@ -303,7 +298,7 @@ class NL80211Interface:
 
         return results
 
-    def _parse_ftm_result(self, msg: dict, target_mac: str) -> Optional[FTMResult]:
+    def _parse_ftm_result(self, msg: dict, target_mac: str) -> FTMResult | None:
         """Parse a single FTM result from a netlink message."""
         try:
             attrs = dict(msg.get("attrs", []))
@@ -329,9 +324,7 @@ class NL80211Interface:
                         dist_spread_mm=0,
                         rssi_avg_dbm=0,
                         rssi_spread_dbm=0,
-                        burst_index=ftm_data.get(
-                            "NL80211_PMSR_FTM_RESP_ATTR_BURST_INDEX", 0
-                        ),
+                        burst_index=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_BURST_INDEX", 0),
                         num_ftmr_attempts=0,
                         num_ftmr_successes=0,
                         fail_reason=FTMFailReason(fail),
@@ -340,21 +333,13 @@ class NL80211Interface:
                 return FTMResult(
                     target_mac=target_mac,
                     rtt_avg_ps=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_RTT_AVG", 0),
-                    rtt_variance_ps=ftm_data.get(
-                        "NL80211_PMSR_FTM_RESP_ATTR_RTT_VARIANCE", 0
-                    ),
+                    rtt_variance_ps=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_RTT_VARIANCE", 0),
                     rtt_spread_ps=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_RTT_SPREAD", 0),
                     dist_avg_mm=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_DIST_AVG", 0),
-                    dist_variance_mm=ftm_data.get(
-                        "NL80211_PMSR_FTM_RESP_ATTR_DIST_VARIANCE", 0
-                    ),
-                    dist_spread_mm=ftm_data.get(
-                        "NL80211_PMSR_FTM_RESP_ATTR_DIST_SPREAD", 0
-                    ),
+                    dist_variance_mm=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_DIST_VARIANCE", 0),
+                    dist_spread_mm=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_DIST_SPREAD", 0),
                     rssi_avg_dbm=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_RSSI_AVG", 0),
-                    rssi_spread_dbm=ftm_data.get(
-                        "NL80211_PMSR_FTM_RESP_ATTR_RSSI_SPREAD", 0
-                    ),
+                    rssi_spread_dbm=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_RSSI_SPREAD", 0),
                     burst_index=ftm_data.get("NL80211_PMSR_FTM_RESP_ATTR_BURST_INDEX", 0),
                     num_ftmr_attempts=ftm_data.get(
                         "NL80211_PMSR_FTM_RESP_ATTR_NUM_FTMR_ATTEMPTS", 0

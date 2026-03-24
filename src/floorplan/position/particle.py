@@ -61,19 +61,13 @@ class ParticleFilter:
         mean_y = float(np.average(self._particles[:, 1], weights=self._weights))
 
         # Uncertainty: weighted standard deviation
-        var_x = float(
-            np.average((self._particles[:, 0] - mean_x) ** 2, weights=self._weights)
-        )
-        var_y = float(
-            np.average((self._particles[:, 1] - mean_y) ** 2, weights=self._weights)
-        )
+        var_x = float(np.average((self._particles[:, 0] - mean_x) ** 2, weights=self._weights))
+        var_y = float(np.average((self._particles[:, 1] - mean_y) ** 2, weights=self._weights))
         uncertainty = float(np.sqrt(var_x + var_y))
 
         return Position(x=mean_x, y=mean_y, uncertainty_m=uncertainty)
 
-    def initialize(
-        self, x: float, y: float, spread: float = 5.0, timestamp: float = 0.0
-    ) -> None:
+    def initialize(self, x: float, y: float, spread: float = 5.0, timestamp: float = 0.0) -> None:
         """Initialize particles around a position estimate."""
         self._particles[:, 0] = np.random.normal(x, spread, self.num_particles)
         self._particles[:, 1] = np.random.normal(y, spread, self.num_particles)
@@ -94,13 +88,11 @@ class ParticleFilter:
             return
 
         # Constant velocity + noise
-        self._particles[:, 0] += (
-            self._particles[:, 2] * dt
-            + np.random.normal(0, self.process_noise_pos * dt, self.num_particles)
+        self._particles[:, 0] += self._particles[:, 2] * dt + np.random.normal(
+            0, self.process_noise_pos * dt, self.num_particles
         )
-        self._particles[:, 1] += (
-            self._particles[:, 3] * dt
-            + np.random.normal(0, self.process_noise_pos * dt, self.num_particles)
+        self._particles[:, 1] += self._particles[:, 3] * dt + np.random.normal(
+            0, self.process_noise_pos * dt, self.num_particles
         )
         self._particles[:, 2] += np.random.normal(
             0, self.process_noise_vel * dt, self.num_particles
@@ -134,9 +126,7 @@ class ParticleFilter:
         # Weight by Gaussian likelihood
         errors = measured_distance - expected_dists
         sigma = self.measurement_noise
-        likelihoods = np.exp(-0.5 * (errors / sigma) ** 2) / (
-            sigma * np.sqrt(2 * np.pi)
-        )
+        likelihoods = np.exp(-0.5 * (errors / sigma) ** 2) / (sigma * np.sqrt(2 * np.pi))
 
         # Update weights
         self._weights *= likelihoods

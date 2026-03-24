@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -15,8 +14,8 @@ class ReferencePoint:
     x: float  # meters from origin
     y: float
     z: float = 0.0
-    label: Optional[str] = None
-    calibration_profile: Optional[str] = None
+    label: str | None = None
+    calibration_profile: str | None = None
 
 
 @dataclass
@@ -44,7 +43,7 @@ class FloorPlan:
         default_factory=list
     )
     # Computed affine transform coefficients (populated after calibration)
-    transform_matrix: Optional[list[list[float]]] = None
+    transform_matrix: list[list[float]] | None = None
     width_m: float = 0.0
     height_m: float = 0.0
 
@@ -64,5 +63,5 @@ class SiteConfig:
     tracking_mode: str = "active"  # "active", "passive", "hybrid"
     burst_config: str = "fast"  # "fast", "accurate", or custom
     # Alert settings
-    webhook_url: Optional[str] = None
+    webhook_url: str | None = None
     alert_cooldown_s: float = 60.0

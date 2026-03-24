@@ -6,12 +6,12 @@ import logging
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass, field
-from typing import Callable, Optional
+from collections.abc import Callable
+from dataclasses import dataclass
 
-from floorplan.models import BurstConfig, RangingMeasurement
-from floorplan.ranging.calibration import CalibrationProfile, RangingCalibrator
-from floorplan.ranging.nl80211 import NL80211Interface, FTMResult
+from floorplan.models import BurstConfig
+from floorplan.ranging.calibration import RangingCalibrator
+from floorplan.ranging.nl80211 import FTMResult, NL80211Interface
 from floorplan.ranging.nlos import NLOSDetector
 
 logger = logging.getLogger(__name__)
@@ -48,8 +48,8 @@ class RangingEngine:
     def __init__(
         self,
         interface: str = "wlan0",
-        burst_config: Optional[BurstConfig] = None,
-        calibrator: Optional[RangingCalibrator] = None,
+        burst_config: BurstConfig | None = None,
+        calibrator: RangingCalibrator | None = None,
     ) -> None:
         self.interface = interface
         self.burst_config = burst_config or BurstConfig.fast()
@@ -68,7 +68,7 @@ class RangingEngine:
 
         # Continuous ranging
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._callbacks: list[Callable[[RangingResult], None]] = []
 
     def add_target(self, mac: str, channel: int) -> None:
@@ -92,7 +92,7 @@ class RangingEngine:
         """Register a callback for new ranging results."""
         self._callbacks.append(callback)
 
-    def range_once(self, mac: str, channel: int) -> Optional[RangingResult]:
+    def range_once(self, mac: str, channel: int) -> RangingResult | None:
         """Perform a single ranging measurement to a target."""
         mac = mac.lower()
         raw_results = self._nl80211.start_ftm_measurement(
@@ -110,7 +110,7 @@ class RangingEngine:
         # Aggregate burst results
         return self._process_results(mac, raw_results)
 
-    def get_latest(self, mac: str) -> Optional[RangingResult]:
+    def get_latest(self, mac: str) -> RangingResult | None:
         """Get the most recent ranging result for a target."""
         mac = mac.lower()
         with self._results_lock:
@@ -204,12 +204,10 @@ class RangingEngine:
 
         # Standard deviation
         if len(distances_mm) > 1:
-            variance = sum((d - avg_dist_mm) ** 2 for d in distances_mm) / (
-                len(distances_mm) - 1
-            )
+            variance = sum((d - avg_dist_mm) ** 2 for d in distances_mm) / (len(distances_mm) - 1)
             std_dev_m = (variance**0.5) / 1000.0
         else:
-            std_dev_m = (valid[0].dist_variance_mm**0.5) / 1000.0 if valid else 1.0
+            std_dev_m = (valid[0].dist_variance_mm ** 0.5) / 1000.0 if valid else 1.0
 
         # Average RTT
         rtt_values = [r.rtt_avg_ps for r in valid]

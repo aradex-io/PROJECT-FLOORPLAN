@@ -52,9 +52,7 @@ class TestNLOSDetector:
 
     def test_custom_thresholds(self):
         """Custom thresholds should be respected."""
-        detector = NLOSDetector(
-            thresholds=NLOSThresholds(rtt_variance_threshold_ps=100.0)
-        )
+        detector = NLOSDetector(thresholds=NLOSThresholds(rtt_variance_threshold_ps=100.0))
         # Even moderate variance should trigger with low threshold
         is_nlos, confidence = detector.detect(
             distances_mm=[5000, 5100, 4900],

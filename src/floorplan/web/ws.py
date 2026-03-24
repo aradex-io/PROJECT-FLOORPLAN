@@ -25,17 +25,13 @@ class ConnectionManager:
         """Accept a new WebSocket connection."""
         await websocket.accept()
         self._connections.append(websocket)
-        logger.info(
-            "WebSocket client connected (%d total)", len(self._connections)
-        )
+        logger.info("WebSocket client connected (%d total)", len(self._connections))
 
     def disconnect(self, websocket: WebSocket) -> None:
         """Remove a disconnected WebSocket."""
         if websocket in self._connections:
             self._connections.remove(websocket)
-        logger.info(
-            "WebSocket client disconnected (%d remaining)", len(self._connections)
-        )
+        logger.info("WebSocket client disconnected (%d remaining)", len(self._connections))
 
     async def broadcast(self, data: dict[str, Any]) -> None:
         """Send a JSON message to all connected clients."""
@@ -68,17 +64,19 @@ class ConnectionManager:
         zones: list[str] | None = None,
     ) -> None:
         """Broadcast a device position update."""
-        await self.broadcast({
-            "type": "position_update",
-            "device_id": device_id,
-            "mac": mac,
-            "position": {"x": x, "y": y, "z": z},
-            "uncertainty_m": uncertainty,
-            "confidence": confidence,
-            "state": state,
-            "speed_mps": speed,
-            "zones": zones or [],
-        })
+        await self.broadcast(
+            {
+                "type": "position_update",
+                "device_id": device_id,
+                "mac": mac,
+                "position": {"x": x, "y": y, "z": z},
+                "uncertainty_m": uncertainty,
+                "confidence": confidence,
+                "state": state,
+                "speed_mps": speed,
+                "zones": zones or [],
+            }
+        )
 
     async def send_zone_event(
         self,
@@ -90,21 +88,25 @@ class ConnectionManager:
         dwell_time_s: float | None = None,
     ) -> None:
         """Broadcast a zone event."""
-        await self.broadcast({
-            "type": "zone_event",
-            "device_id": device_id,
-            "zone_name": zone_name,
-            "event_type": event_type,
-            "position": {"x": x, "y": y},
-            "dwell_time_s": dwell_time_s,
-        })
+        await self.broadcast(
+            {
+                "type": "zone_event",
+                "device_id": device_id,
+                "zone_name": zone_name,
+                "event_type": event_type,
+                "position": {"x": x, "y": y},
+                "dwell_time_s": dwell_time_s,
+            }
+        )
 
-    async def send_device_list(self, devices: list[dict]) -> None:
+    async def send_device_list(self, devices: list[dict[str, Any]]) -> None:
         """Broadcast the full device list."""
-        await self.broadcast({
-            "type": "device_list",
-            "devices": devices,
-        })
+        await self.broadcast(
+            {
+                "type": "device_list",
+                "devices": devices,
+            }
+        )
 
     @property
     def client_count(self) -> int:

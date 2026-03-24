@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 import subprocess
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -64,9 +63,17 @@ class MonitorMode:
             # Try alternative: airmon-ng style
             logger.warning("iw method failed (%s), trying alternative", e)
             try:
-                result = self._run_cmd(
-                    ["iw", "phy", f"phy{self._get_phy_index()}", "interface", "add",
-                     self.monitor_interface, "type", "monitor"],
+                self._run_cmd(
+                    [
+                        "iw",
+                        "phy",
+                        f"phy{self._get_phy_index()}",
+                        "interface",
+                        "add",
+                        self.monitor_interface,
+                        "type",
+                        "monitor",
+                    ],
                     check=False,
                 )
                 self._run_cmd(["ip", "link", "set", self.monitor_interface, "up"])
@@ -88,9 +95,7 @@ class MonitorMode:
             self._run_cmd(["ip", "link", "set", self.monitor_interface, "down"])
 
             if self.monitor_interface != self.interface:
-                self._run_cmd(
-                    ["iw", self.monitor_interface, "del"], check=False
-                )
+                self._run_cmd(["iw", self.monitor_interface, "del"], check=False)
             else:
                 self._run_cmd(["iw", self.interface, "set", "type", "managed"])
 
@@ -149,13 +154,9 @@ class MonitorMode:
         return 5950 + channel * 5
 
     @staticmethod
-    def _run_cmd(
-        cmd: list[str], check: bool = True
-    ) -> subprocess.CompletedProcess[str]:
+    def _run_cmd(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
         logger.debug("Running: %s", " ".join(cmd))
-        return subprocess.run(
-            cmd, capture_output=True, text=True, check=check, timeout=10
-        )
+        return subprocess.run(cmd, capture_output=True, text=True, check=check, timeout=10)
 
     def __enter__(self) -> MonitorMode:
         return self

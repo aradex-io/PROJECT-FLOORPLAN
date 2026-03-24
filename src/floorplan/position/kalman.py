@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -68,12 +68,14 @@ class KalmanTracker:
         """Initialize the filter at a known position."""
         c = self.config
         self._state = np.array([x, y, 0.0, 0.0])
-        self._P = np.diag([
-            c.initial_pos_uncertainty,
-            c.initial_pos_uncertainty,
-            c.initial_vel_uncertainty,
-            c.initial_vel_uncertainty,
-        ])
+        self._P = np.diag(
+            [
+                c.initial_pos_uncertainty,
+                c.initial_pos_uncertainty,
+                c.initial_vel_uncertainty,
+                c.initial_vel_uncertainty,
+            ]
+        )
         self._last_update_time = timestamp if timestamp is not None else time.time()
         self._initialized = True
 
@@ -91,7 +93,7 @@ class KalmanTracker:
             return self.position
 
         # State transition matrix
-        F = np.eye(4)
+        F = np.eye(4)  # noqa: N806
         F[0, 2] = dt  # x += vx * dt
         F[1, 3] = dt  # y += vy * dt
 
@@ -99,12 +101,14 @@ class KalmanTracker:
         c = self.config
         q_p = c.process_noise_pos
         q_v = c.process_noise_vel
-        Q = np.array([
-            [q_p * dt**3 / 3, 0, q_p * dt**2 / 2, 0],
-            [0, q_p * dt**3 / 3, 0, q_p * dt**2 / 2],
-            [q_p * dt**2 / 2, 0, q_v * dt, 0],
-            [0, q_p * dt**2 / 2, 0, q_v * dt],
-        ])
+        Q = np.array(  # noqa: N806
+            [
+                [q_p * dt**3 / 3, 0, q_p * dt**2 / 2, 0],
+                [0, q_p * dt**3 / 3, 0, q_p * dt**2 / 2],
+                [q_p * dt**2 / 2, 0, q_v * dt, 0],
+                [0, q_p * dt**2 / 2, 0, q_v * dt],
+            ]
+        )
 
         self._state = F @ self._state
         self._P = F @ self._P @ F.T + Q
@@ -149,25 +153,23 @@ class KalmanTracker:
             dx = 1e-6
 
         # Jacobian of measurement model
-        H = np.array([dx / predicted_distance, dy / predicted_distance, 0.0, 0.0]).reshape(
-            1, 4
-        )
+        H = np.array([dx / predicted_distance, dy / predicted_distance, 0.0, 0.0]).reshape(1, 4)  # noqa: N806
 
         # Innovation (measurement residual)
         innovation = measured_distance - predicted_distance
 
         # Measurement noise
-        R = np.array([[measurement_noise or self.config.measurement_noise]])
+        R = np.array([[measurement_noise or self.config.measurement_noise]])  # noqa: N806
 
         # Kalman gain
-        S = H @ self._P @ H.T + R
-        K = self._P @ H.T @ np.linalg.inv(S)
+        S = H @ self._P @ H.T + R  # noqa: N806
+        K = self._P @ H.T @ np.linalg.inv(S)  # noqa: N806
 
         # State update
         self._state = self._state + (K @ np.array([[innovation]])).flatten()
 
         # Covariance update (Joseph form for numerical stability)
-        I_KH = np.eye(4) - K @ H
+        I_KH = np.eye(4) - K @ H  # noqa: N806
         self._P = I_KH @ self._P @ I_KH.T + K @ R @ K.T
 
         return self.position
@@ -190,24 +192,29 @@ class KalmanTracker:
         self.predict(timestamp)
 
         # Linear measurement model: z = [x, y]
-        H = np.array([
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-        ], dtype=float)
+        H = np.array(  # noqa: N806
+            [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+            ],
+            dtype=float,
+        )
 
-        innovation = np.array([
-            measured_x - self._state[0],
-            measured_y - self._state[1],
-        ])
+        innovation = np.array(
+            [
+                measured_x - self._state[0],
+                measured_y - self._state[1],
+            ]
+        )
 
         r = measurement_noise or self.config.measurement_noise
-        R = np.eye(2) * r
+        R = np.eye(2) * r  # noqa: N806
 
-        S = H @ self._P @ H.T + R
-        K = self._P @ H.T @ np.linalg.inv(S)
+        S = H @ self._P @ H.T + R  # noqa: N806
+        K = self._P @ H.T @ np.linalg.inv(S)  # noqa: N806
 
         self._state = self._state + K @ innovation
-        I_KH = np.eye(4) - K @ H
+        I_KH = np.eye(4) - K @ H  # noqa: N806
         self._P = I_KH @ self._P @ I_KH.T + K @ R @ K.T
 
         return self.position

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -89,9 +89,7 @@ class DeviceFingerprint:
                 best_match = device_id
 
         if best_match:
-            logger.info(
-                "Fuzzy fingerprint match: score=%.2f → device %s", best_score, best_match
-            )
+            logger.info("Fuzzy fingerprint match: score=%.2f → device %s", best_score, best_match)
         return best_match
 
     def build_signature(
@@ -130,11 +128,13 @@ class DeviceFingerprint:
                 scores.append(len(set_a & set_b) / len(union))
 
         # Capability match
-        cap_match = sum([
-            a.ht_capable == b.ht_capable,
-            a.vht_capable == b.vht_capable,
-            a.he_capable == b.he_capable,
-        ])
+        cap_match = sum(
+            [
+                a.ht_capable == b.ht_capable,
+                a.vht_capable == b.vht_capable,
+                a.he_capable == b.he_capable,
+            ]
+        )
         scores.append(cap_match / 3.0)
 
         # SSID overlap

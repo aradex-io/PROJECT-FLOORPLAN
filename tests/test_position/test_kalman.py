@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from floorplan.position.kalman import KalmanTracker, KalmanConfig
+from floorplan.position.kalman import KalmanConfig, KalmanTracker
 
 
 class TestKalmanTracker:
@@ -36,8 +36,6 @@ class TestKalmanTracker:
 
         # True position at (5, 5), reference at (0, 0)
         true_x, true_y = 5.0, 5.0
-        true_dist = np.sqrt(true_x**2 + true_y**2)
-
         # Feed many measurements from multiple reference points
         refs = [(0, 0), (10, 0), (0, 10)]
         for i in range(50):

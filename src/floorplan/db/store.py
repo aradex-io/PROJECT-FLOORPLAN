@@ -6,11 +6,13 @@ import json
 import logging
 import sqlite3
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, Optional
 
-from floorplan.models import Position, RangingMeasurement
+from typing import Any
+
+from floorplan.models import Position
 from floorplan.tracking.device import TrackedDevice
 
 logger = logging.getLogger(__name__)
@@ -97,8 +99,8 @@ class SessionStore:
 
     def __init__(self, db_path: str | Path = "floorplan.db") -> None:
         self.db_path = Path(db_path)
-        self._conn: Optional[sqlite3.Connection] = None
-        self._current_session_id: Optional[int] = None
+        self._conn: sqlite3.Connection | None = None
+        self._current_session_id: int | None = None
 
     def connect(self) -> None:
         """Open database connection and ensure schema exists."""
@@ -144,7 +146,7 @@ class SessionStore:
             logger.info("Started session %d: %s", session_id, name)
             return session_id
 
-    def end_session(self, session_id: Optional[int] = None) -> None:
+    def end_session(self, session_id: int | None = None) -> None:
         """End a recording session."""
         sid = session_id or self._current_session_id
         if sid is None:
@@ -158,7 +160,7 @@ class SessionStore:
             self._current_session_id = None
         logger.info("Ended session %d", sid)
 
-    def list_sessions(self) -> list[dict]:
+    def list_sessions(self) -> list[dict[str, Any]]:
         """List all recorded sessions."""
         with self._cursor() as cur:
             cur.execute("SELECT * FROM sessions ORDER BY started_at DESC")
@@ -173,7 +175,7 @@ class SessionStore:
         position: Position,
         confidence: float = 0.0,
         timestamp: float = 0.0,
-        session_id: Optional[int] = None,
+        session_id: int | None = None,
     ) -> None:
         """Record a device position."""
         sid = session_id or self._current_session_id
@@ -185,8 +187,17 @@ class SessionStore:
                 """INSERT INTO position_records
                    (session_id, device_id, mac, x, y, z, uncertainty_m, confidence, timestamp)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (sid, device_id, mac, position.x, position.y, position.z,
-                 position.uncertainty_m, confidence, ts),
+                (
+                    sid,
+                    device_id,
+                    mac,
+                    position.x,
+                    position.y,
+                    position.z,
+                    position.uncertainty_m,
+                    confidence,
+                    ts,
+                ),
             )
 
     def record_ranging(
@@ -198,7 +209,7 @@ class SessionStore:
         rtt_ns: float = 0.0,
         is_nlos: bool = False,
         timestamp: float = 0.0,
-        session_id: Optional[int] = None,
+        session_id: int | None = None,
     ) -> None:
         """Record a ranging measurement."""
         sid = session_id or self._current_session_id
@@ -208,7 +219,9 @@ class SessionStore:
         with self._cursor() as cur:
             cur.execute(
                 """INSERT INTO ranging_records
-                   (session_id, target_mac, distance_m, std_dev_m, rssi_dbm, rtt_ns, is_nlos, timestamp)
+                   (session_id, target_mac, distance_m,
+                    std_dev_m, rssi_dbm, rtt_ns,
+                    is_nlos, timestamp)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (sid, target_mac, distance_m, std_dev_m, rssi_dbm, rtt_ns, int(is_nlos), ts),
             )
@@ -216,7 +229,7 @@ class SessionStore:
     def record_device(
         self,
         device: TrackedDevice,
-        session_id: Optional[int] = None,
+        session_id: int | None = None,
     ) -> None:
         """Record device information."""
         sid = session_id or self._current_session_id
@@ -225,11 +238,19 @@ class SessionStore:
         with self._cursor() as cur:
             cur.execute(
                 """INSERT OR REPLACE INTO device_records
-                   (session_id, device_id, mac, mac_history, fingerprint_hash, first_seen, last_seen)
+                   (session_id, device_id, mac,
+                    mac_history, fingerprint_hash,
+                    first_seen, last_seen)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (sid, device.device_id, device.mac,
-                 json.dumps(device.mac_history), device.fingerprint_hash,
-                 device.first_seen, device.last_seen),
+                (
+                    sid,
+                    device.device_id,
+                    device.mac,
+                    json.dumps(device.mac_history),
+                    device.fingerprint_hash,
+                    device.first_seen,
+                    device.last_seen,
+                ),
             )
 
     def record_zone_event(
@@ -238,9 +259,9 @@ class SessionStore:
         zone_name: str,
         event_type: str,
         position: Position,
-        dwell_time_s: Optional[float] = None,
+        dwell_time_s: float | None = None,
         timestamp: float = 0.0,
-        session_id: Optional[int] = None,
+        session_id: int | None = None,
     ) -> None:
         """Record a zone event."""
         sid = session_id or self._current_session_id
@@ -252,8 +273,7 @@ class SessionStore:
                 """INSERT INTO zone_events
                    (session_id, device_id, zone_name, event_type, x, y, dwell_time_s, timestamp)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (sid, device_id, zone_name, event_type,
-                 position.x, position.y, dwell_time_s, ts),
+                (sid, device_id, zone_name, event_type, position.x, position.y, dwell_time_s, ts),
             )
 
     # --- Playback / query ---
@@ -261,14 +281,14 @@ class SessionStore:
     def get_position_track(
         self,
         session_id: int,
-        device_id: Optional[str] = None,
+        device_id: str | None = None,
         start_time: float = 0.0,
         end_time: float = 0.0,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Retrieve position records for playback."""
         with self._cursor() as cur:
             query = "SELECT * FROM position_records WHERE session_id = ?"
-            params: list = [session_id]
+            params: list[Any] = [session_id]
 
             if device_id:
                 query += " AND device_id = ?"
@@ -284,7 +304,7 @@ class SessionStore:
             cur.execute(query, params)
             return [dict(row) for row in cur.fetchall()]
 
-    def get_session_devices(self, session_id: int) -> list[dict]:
+    def get_session_devices(self, session_id: int) -> list[dict[str, Any]]:
         """Get all devices observed in a session."""
         with self._cursor() as cur:
             cur.execute(
@@ -296,12 +316,12 @@ class SessionStore:
     def get_zone_events(
         self,
         session_id: int,
-        zone_name: Optional[str] = None,
-    ) -> list[dict]:
+        zone_name: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get zone events for a session."""
         with self._cursor() as cur:
             query = "SELECT * FROM zone_events WHERE session_id = ?"
-            params: list = [session_id]
+            params: list[Any] = [session_id]
             if zone_name:
                 query += " AND zone_name = ?"
                 params.append(zone_name)
@@ -309,7 +329,7 @@ class SessionStore:
             cur.execute(query, params)
             return [dict(row) for row in cur.fetchall()]
 
-    def get_session_stats(self, session_id: int) -> dict:
+    def get_session_stats(self, session_id: int) -> dict[str, Any]:
         """Get summary statistics for a session."""
         with self._cursor() as cur:
             cur.execute(
@@ -319,7 +339,8 @@ class SessionStore:
             pos_count = cur.fetchone()["count"]
 
             cur.execute(
-                "SELECT COUNT(DISTINCT device_id) as count FROM position_records WHERE session_id = ?",
+                "SELECT COUNT(DISTINCT device_id) as count "
+                "FROM position_records WHERE session_id = ?",
                 (session_id,),
             )
             device_count = cur.fetchone()["count"]
@@ -331,7 +352,9 @@ class SessionStore:
             event_count = cur.fetchone()["count"]
 
             cur.execute(
-                "SELECT MIN(timestamp) as start_t, MAX(timestamp) as end_t FROM position_records WHERE session_id = ?",
+                "SELECT MIN(timestamp) as start_t, "
+                "MAX(timestamp) as end_t "
+                "FROM position_records WHERE session_id = ?",
                 (session_id,),
             )
             row = cur.fetchone()

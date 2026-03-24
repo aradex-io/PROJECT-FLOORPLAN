@@ -57,3 +57,31 @@ asyncio_mode = "auto"
 [tool.mypy]
 python_version = "3.10"
 strict = true
+warn_return_any = false
+# Third-party decorators (click, fastapi) lack stubs; disable noise
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = [
+    "numpy.*",
+    "scipy.*",
+    "scapy.*",
+    "pyroute2.*",
+    "fastapi.*",
+    "uvicorn.*",
+    "click.*",
+    "rich.*",
+    "pydantic.*",
+    "aiosqlite.*",
+    "starlette.*",
+    "yaml.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "floorplan.passive.*",
+    "floorplan.ranging.nl80211",
+]
+# These modules use scapy/pyroute2 dynamic objects extensively
+disallow_any_expr = false

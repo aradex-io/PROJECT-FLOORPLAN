@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 import time
 
 import click
 from rich.console import Console
 from rich.table import Table
-from rich.live import Live
 
 console = Console()
 
@@ -68,7 +66,9 @@ def check(ctx: click.Context) -> None:
 
 
 @cli.command()
-@click.option("-c", "--config", "config_path", type=click.Path(exists=True), help="Site config YAML.")
+@click.option(
+    "-c", "--config", "config_path", type=click.Path(exists=True), help="Site config YAML."
+)
 @click.pass_context
 def scan(ctx: click.Context, config_path: str | None) -> None:
     """Discover FTM-capable devices in range."""
@@ -81,12 +81,14 @@ def scan(ctx: click.Context, config_path: str | None) -> None:
     try:
         result = subprocess.run(
             ["iw", "dev", interface, "scan"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         output = result.stdout
 
-        devices: list[dict] = []
-        current: dict = {}
+        devices: list[dict[str, object]] = []
+        current: dict[str, object] = {}
 
         for line in output.split("\n"):
             line = line.strip()
@@ -125,8 +127,10 @@ def scan(ctx: click.Context, config_path: str | None) -> None:
             )
 
         console.print(table)
-        console.print(f"\n[bold]{len(devices)}[/bold] devices found, "
-                      f"[bold]{sum(1 for d in devices if d.get('ftm'))}[/bold] FTM-capable")
+        console.print(
+            f"\n[bold]{len(devices)}[/bold] devices found, "
+            f"[bold]{sum(1 for d in devices if d.get('ftm'))}[/bold] FTM-capable"
+        )
 
     except FileNotFoundError:
         console.print("[red]Error: 'iw' command not found. Install iw package.[/red]")
@@ -143,8 +147,8 @@ def scan(ctx: click.Context, config_path: str | None) -> None:
 @click.pass_context
 def range(ctx: click.Context, mac: str, channel: int, count: int) -> None:
     """Perform FTM ranging to a target device."""
-    from floorplan.ranging import RangingEngine
     from floorplan.models import BurstConfig
+    from floorplan.ranging import RangingEngine
 
     interface = ctx.obj["interface"]
     console.print(f"[bold]Ranging to {mac} on {interface}...[/bold]")
@@ -175,10 +179,21 @@ def range(ctx: click.Context, mac: str, channel: int, count: int) -> None:
 
 
 @cli.command()
-@click.option("-c", "--config", "config_path", required=True, type=click.Path(exists=True),
-              help="Site configuration YAML file.")
-@click.option("--filter", "filter_type", type=click.Choice(["kalman", "particle"]),
-              default="kalman", help="Tracking filter type.")
+@click.option(
+    "-c",
+    "--config",
+    "config_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Site configuration YAML file.",
+)
+@click.option(
+    "--filter",
+    "filter_type",
+    type=click.Choice(["kalman", "particle"]),
+    default="kalman",
+    help="Tracking filter type.",
+)
 @click.option("--record/--no-record", default=False, help="Record session to database.")
 @click.option("--db", "db_path", default="floorplan.db", help="Database path for recording.")
 @click.pass_context
@@ -191,10 +206,10 @@ def track(
 ) -> None:
     """Start continuous multi-target tracking."""
     from floorplan.config import load_config
-    from floorplan.ranging import RangingEngine
-    from floorplan.position import PositionEngine
-    from floorplan.tracking import TrackManager
     from floorplan.models import BurstConfig
+    from floorplan.position import PositionEngine
+    from floorplan.ranging import RangingEngine
+    from floorplan.tracking import TrackManager
 
     config = load_config(config_path)
     console.print(f"[bold]Starting tracking: {config.name}[/bold]")
@@ -205,9 +220,11 @@ def track(
     # Initialize components
     ranging = RangingEngine(
         interface=config.interface,
-        burst_config=BurstConfig.fast() if config.burst_config == "fast" else BurstConfig.accurate(),
+        burst_config=BurstConfig.fast()
+        if config.burst_config == "fast"
+        else BurstConfig.accurate(),
     )
-    position = PositionEngine(
+    _position = PositionEngine(
         reference_points=config.reference_points,
         filter_type=filter_type,
     )
@@ -217,6 +234,7 @@ def track(
     store = None
     if record:
         from floorplan.db import SessionStore
+
         store = SessionStore(db_path)
         store.connect()
         session_id = store.start_session(config.name)
@@ -234,8 +252,12 @@ def track(
         )
         if store:
             store.record_zone_event(
-                event.device_id, event.zone_name, event.event_type,
-                event.position, event.dwell_time_s, event.timestamp,
+                event.device_id,
+                event.zone_name,
+                event.event_type,
+                event.position,
+                event.dwell_time_s,
+                event.timestamp,
             )
 
     tracker.on_zone_event(on_zone_event)
@@ -283,7 +305,7 @@ def track(
 @click.pass_context
 def monitor(ctx: click.Context, passive: bool, channel: int) -> None:
     """Monitor FTM exchanges and probe requests (passive surveillance)."""
-    from floorplan.passive import MonitorMode, FTMCapture, ProbeTracker
+    from floorplan.passive import FTMCapture, MonitorMode, ProbeTracker
 
     interface = ctx.obj["interface"]
     console.print(f"[bold]Starting {'passive ' if passive else ''}monitor on {interface}[/bold]")
@@ -393,6 +415,7 @@ def replay(session_db: str, speed: float, session_id: int | None) -> None:
 def dashboard(host: str, port: int, static_dir: str | None) -> None:
     """Start the web dashboard."""
     import uvicorn
+
     from floorplan.web.app import create_app
 
     console.print(f"[bold]Starting FLOORPLAN dashboard on {host}:{port}[/bold]")
@@ -435,7 +458,7 @@ def export(session_db: str, session_id: int | None, output: str, fmt: str) -> No
             json.dump(data, f, indent=2, default=str)
     else:
         with open(output, "w") as f:
-            f.write(f"# FLOORPLAN Session Report\n\n")
+            f.write("# FLOORPLAN Session Report\n\n")
             f.write(f"## Session {session_id}\n\n")
             f.write(f"- Duration: {stats['duration_s']:.0f}s\n")
             f.write(f"- Devices tracked: {stats['unique_devices']}\n")

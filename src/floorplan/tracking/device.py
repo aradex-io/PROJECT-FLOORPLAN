@@ -50,7 +50,7 @@ class TrackedDevice:
 
         self.track_history.append((ts, pos))
         if len(self.track_history) > self.max_history:
-            self.track_history = self.track_history[-self.max_history:]
+            self.track_history = self.track_history[-self.max_history :]
 
         # Update confidence based on position uncertainty
         if pos.uncertainty_m < 1.0:

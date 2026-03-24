@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from floorplan.config.models import ZoneConfig
 from floorplan.models import Position, TrackState, ZoneEvent
@@ -93,12 +93,12 @@ class TrackManager:
 
         return device
 
-    def get_device(self, device_id: str) -> Optional[TrackedDevice]:
+    def get_device(self, device_id: str) -> TrackedDevice | None:
         """Get a tracked device by ID."""
         with self._lock:
             return self._devices.get(device_id)
 
-    def get_device_by_mac(self, mac: str) -> Optional[TrackedDevice]:
+    def get_device_by_mac(self, mac: str) -> TrackedDevice | None:
         """Get a tracked device by MAC address."""
         mac = mac.lower()
         with self._lock:
