@@ -1,0 +1,68 @@
+name: "Example Office"
+description: "Example FLOORPLAN site configuration for a small office"
+interface: wlan0
+scan_interval_s: 1.0
+tracking_mode: active
+burst_config: fast
+alert_cooldown_s: 60.0
+
+reference_points:
+  - mac: "aa:bb:cc:dd:ee:01"
+    channel: 2437
+    x: 0.0
+    y: 0.0
+    z: 2.5
+    label: "AP-NW Corner"
+  - mac: "aa:bb:cc:dd:ee:02"
+    channel: 2437
+    x: 15.0
+    y: 0.0
+    z: 2.5
+    label: "AP-NE Corner"
+  - mac: "aa:bb:cc:dd:ee:03"
+    channel: 2437
+    x: 0.0
+    y: 10.0
+    z: 2.5
+    label: "AP-SW Corner"
+  - mac: "aa:bb:cc:dd:ee:04"
+    channel: 5180
+    x: 15.0
+    y: 10.0
+    z: 2.5
+    label: "AP-SE Corner"
+
+zones:
+  - name: "Server Room"
+    zone_type: restricted
+    vertices:
+      - [10.0, 7.0]
+      - [15.0, 7.0]
+      - [15.0, 10.0]
+      - [10.0, 10.0]
+    floor: 0
+    alert_on_enter: true
+    alert_on_dwell: true
+    max_dwell_time_s: 300
+
+  - name: "Main Office"
+    zone_type: authorized
+    vertices:
+      - [0.0, 0.0]
+      - [10.0, 0.0]
+      - [10.0, 10.0]
+      - [0.0, 10.0]
+    floor: 0
+
+floor_plans:
+  - image_path: "office_floor1.png"
+    floor: 0
+    width_m: 15.0
+    height_m: 10.0
+    calibration_points:
+      - pixel: [0, 0]
+        world: [0.0, 0.0]
+      - pixel: [750, 0]
+        world: [15.0, 0.0]
+      - pixel: [0, 500]
+        world: [0.0, 10.0]
