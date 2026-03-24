@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from enum import IntEnum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +120,7 @@ class NL80211Interface:
         self.interface = interface
         self._ifindex: int | None = None
         self._phy_index: int | None = None
-        self._nl_socket: object = None
+        self._nl_socket: Any = None
 
     def _get_ifindex(self) -> int:
         """Get the interface index for the Wi-Fi device."""
@@ -298,7 +299,7 @@ class NL80211Interface:
 
         return results
 
-    def _parse_ftm_result(self, msg: dict, target_mac: str) -> FTMResult | None:
+    def _parse_ftm_result(self, msg: dict[str, Any], target_mac: str) -> FTMResult | None:
         """Parse a single FTM result from a netlink message."""
         try:
             attrs = dict(msg.get("attrs", []))

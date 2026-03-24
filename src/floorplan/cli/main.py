@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from typing import Any
 
 import click
 from rich.console import Console
@@ -245,7 +246,7 @@ def track(
         ranging.add_target(rp.mac, rp.channel)
 
     # Zone event handler
-    def on_zone_event(event):
+    def on_zone_event(event: Any) -> None:
         console.print(
             f"  [yellow]ZONE {event.event_type.upper()}[/yellow]: "
             f"{event.device_id} → {event.zone_name}"
@@ -321,13 +322,13 @@ def monitor(ctx: click.Context, passive: bool, channel: int) -> None:
         ftm_cap = FTMCapture(interface=status.monitor_interface)
         probe_trk = ProbeTracker(interface=status.monitor_interface)
 
-        def on_exchange(exc):
+        def on_exchange(exc: Any) -> None:
             console.print(
                 f"  [cyan]FTM[/cyan] {exc.initiator_mac} → {exc.responder_mac} "
                 f"(ch {exc.channel}, burst #{exc.burst_count})"
             )
 
-        def on_probe(sighting):
+        def on_probe(sighting: Any) -> None:
             randomized = " [yellow]R[/yellow]" if sighting.is_randomized_mac else ""
             console.print(
                 f"  [dim]PROBE[/dim] {sighting.mac}{randomized} "

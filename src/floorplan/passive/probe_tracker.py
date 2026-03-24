@@ -12,6 +12,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +113,7 @@ class ProbeTracker:
         except Exception as e:
             logger.error("Probe sniff error: %s", e)
 
-    def _process_probe(self, pkt: object) -> None:
+    def _process_probe(self, pkt: Any) -> None:
         """Process a captured probe request frame."""
         from scapy.all import Dot11, Dot11Elt, RadioTap
 

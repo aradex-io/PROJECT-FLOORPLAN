@@ -139,9 +139,9 @@ class DeviceFingerprint:
 
         # SSID overlap
         if a.ssids_probed or b.ssids_probed:
-            union = a.ssids_probed | b.ssids_probed
-            if union:
-                scores.append(len(a.ssids_probed & b.ssids_probed) / len(union))
+            ssid_union = a.ssids_probed | b.ssids_probed
+            if ssid_union:
+                scores.append(len(a.ssids_probed & b.ssids_probed) / len(ssid_union))
 
         # FTM timing similarity (within 20%)
         if a.avg_ftm_response_time_us > 0 and b.avg_ftm_response_time_us > 0:

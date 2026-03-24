@@ -7,6 +7,7 @@ obstacles. Detection uses RTT variance analysis and RSSI anomaly detection.
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -36,8 +37,8 @@ class NLOSDetector:
 
     def detect(
         self,
-        distances_mm: list[int | float],
-        rtt_variances: list[int | float],
+        distances_mm: Sequence[int | float],
+        rtt_variances: Sequence[int | float],
         rssi_dbm: int,
     ) -> tuple[bool, float]:
         """Detect NLOS condition from measurement statistics.

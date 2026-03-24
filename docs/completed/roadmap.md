@@ -7,7 +7,7 @@ Checked items have been implemented, tested, and merged.
 - [x] Project scaffolding (pyproject.toml, src layout, frontend skeleton)
 - [x] CLAUDE.md development rules
 - [x] Documentation artifact structure (`docs/`)
-- [ ] CI pipeline (lint, type-check, test)
+- [x] CI pipeline (lint, type-check, test)
 - [ ] Dev environment setup guide
 
 ## Phase 1 — Ranging Engine

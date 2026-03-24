@@ -128,9 +128,9 @@ class TrackManager:
                     lost_ids.append(device.device_id)
 
         for device_id in lost_ids:
-            device = self._devices.get(device_id)
-            if device:
-                self._emit_device_event(device, "lost")
+            lost_device = self._devices.get(device_id)
+            if lost_device:
+                self._emit_device_event(lost_device, "lost")
 
         return lost_ids
 

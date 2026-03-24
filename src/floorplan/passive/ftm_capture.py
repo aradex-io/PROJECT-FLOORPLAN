@@ -11,6 +11,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +133,7 @@ class FTMCapture:
         except Exception as e:
             logger.error("Sniff error: %s", e)
 
-    def _process_frame(self, pkt: object) -> None:
+    def _process_frame(self, pkt: Any) -> None:
         """Process a captured 802.11 frame for FTM content."""
         from scapy.all import Dot11, Dot11Action, RadioTap
 

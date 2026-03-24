@@ -89,7 +89,7 @@ class TrackedDevice:
             return 0.0
         return time.time() - enter_time
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, object]:
         """Serialize to dictionary for API/WebSocket transmission."""
         return {
             "device_id": self.device_id,
