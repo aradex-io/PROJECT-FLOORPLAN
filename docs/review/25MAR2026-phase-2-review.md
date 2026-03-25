@@ -90,10 +90,29 @@ Phase 2 has four roadmap items:
 2. **No thread safety** — PositionEngine is single-threaded by design (called from
    RangingEngine's callback on its background thread). Not a bug, but worth noting.
 
+## Known Issues for Phase 6 Hardening
+
+Deep review identified robustness issues to address during hardening:
+
+1. **Kalman `np.linalg.inv(S)`** (kalman.py:166, 214) — direct matrix inversion could
+   fail on singular/near-singular S matrices. Should use `np.linalg.solve()` or pinv.
+2. **Trilateration convergence unchecked** (trilateration.py:89, 122) — `least_squares()`
+   result.success not verified. Could return nonsense silently.
+3. **Engine measurement noise squaring** (engine.py:158) — passes `uncertainty_m²` as
+   measurement noise, but uncertainty is already RMSE. Squaring inflates noise. Works
+   in practice (conservative), but technically incorrect.
+4. **Particle filter not auto-initialized** (engine.py:175) — with <3 refs, particle
+   filter returns None (needs trilateration first), while Kalman auto-initializes.
+   Asymmetric but functional since first trilateration seeds the filter.
+
+None of these are blocking — the system converges correctly in integration tests.
+Deferred to Phase 6 hardening.
+
 ## Verdict
 
 **Phase 2 is COMPLETE.** All four items have full implementations with working tests.
-The integration tests from Phase 1 validate the end-to-end pipeline. Mark all items done.
+The integration tests from Phase 1 validate the end-to-end pipeline. Known robustness
+issues are documented and deferred to Phase 6. Mark all items done.
 
 ## Outcome
 
