@@ -114,13 +114,21 @@ class NL80211Interface:
     - Query device FTM capabilities
     - Initiate FTM measurements to target devices
     - Parse FTM measurement results
+
+    When a simulator is provided, all FTM operations use the simulator
+    instead of real hardware, enabling hardware-free development and testing.
     """
 
-    def __init__(self, interface: str = "wlan0") -> None:
+    def __init__(
+        self,
+        interface: str = "wlan0",
+        simulator: Any = None,
+    ) -> None:
         self.interface = interface
         self._ifindex: int | None = None
         self._phy_index: int | None = None
         self._nl_socket: Any = None
+        self._simulator: Any = simulator  # FTMSimulator instance (optional)
 
     def _get_ifindex(self) -> int:
         """Get the interface index for the Wi-Fi device."""
@@ -231,6 +239,10 @@ class NL80211Interface:
         mac_bytes = bytes.fromhex(target_mac.replace(":", ""))
         if len(mac_bytes) != 6:
             raise ValueError(f"Invalid MAC address: {target_mac}")
+
+        if self._simulator is not None:
+            logger.debug("Simulator FTM measurement to %s on channel %d", target_mac, channel)
+            return self._simulator.measure(target_mac, num_bursts_exp, ftms_per_burst)
 
         if self._nl_socket is None:
             logger.info("Simulated FTM measurement to %s on channel %d", target_mac, channel)

@@ -12,10 +12,10 @@ Checked items have been implemented, tested, and merged.
 
 ## Phase 1 — Ranging Engine
 
-- [ ] nl80211 FTM request/response via pyroute2
-- [ ] Simulation mode for hardware-free development
-- [ ] Calibration routines (bias correction, per-AP offsets)
-- [ ] NLOS detection and mitigation
+- [x] nl80211 FTM request/response via pyroute2
+- [x] Simulation mode for hardware-free development
+- [x] Calibration routines (bias correction, per-AP offsets)
+- [x] NLOS detection and mitigation
 
 ## Phase 2 — Position Engine
 

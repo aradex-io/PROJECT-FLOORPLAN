@@ -50,12 +50,13 @@ class RangingEngine:
         interface: str = "wlan0",
         burst_config: BurstConfig | None = None,
         calibrator: RangingCalibrator | None = None,
+        nl80211: NL80211Interface | None = None,
     ) -> None:
         self.interface = interface
         self.burst_config = burst_config or BurstConfig.fast()
         self.calibrator = calibrator or RangingCalibrator()
         self.nlos_detector = NLOSDetector()
-        self._nl80211 = NL80211Interface(interface)
+        self._nl80211 = nl80211 or NL80211Interface(interface)
 
         # Target management
         self._targets: dict[str, int] = {}  # mac -> channel

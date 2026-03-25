@@ -3,6 +3,7 @@
 from floorplan.ranging.calibration import CalibrationProfile, RangingCalibrator
 from floorplan.ranging.engine import RangingEngine, RangingResult
 from floorplan.ranging.nlos import NLOSDetector
+from floorplan.ranging.simulator import FTMSimulator, SimulatedAP
 
 __all__ = [
     "RangingEngine",
@@ -10,4 +11,6 @@ __all__ = [
     "CalibrationProfile",
     "RangingCalibrator",
     "NLOSDetector",
+    "FTMSimulator",
+    "SimulatedAP",
 ]
