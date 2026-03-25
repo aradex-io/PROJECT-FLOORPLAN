@@ -19,10 +19,10 @@ Checked items have been implemented, tested, and merged.
 
 ## Phase 2 — Position Engine
 
-- [ ] Trilateration (least-squares, weighted)
-- [ ] Kalman filter (constant-velocity model)
-- [ ] Particle filter (for non-Gaussian environments)
-- [ ] Engine orchestration (filter selection, fallback)
+- [x] Trilateration (least-squares, weighted)
+- [x] Kalman filter (constant-velocity model)
+- [x] Particle filter (for non-Gaussian environments)
+- [x] Engine orchestration (filter selection, fallback)
 
 ## Phase 3 — Passive Surveillance
 
