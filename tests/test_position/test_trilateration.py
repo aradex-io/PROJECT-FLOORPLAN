@@ -1,9 +1,9 @@
 """Tests for the trilateration solver."""
 
-import pytest
 import numpy as np
+import pytest
 
-from floorplan.position.trilateration import TrilaterationSolver, RangeInput
+from floorplan.position.trilateration import RangeInput, TrilaterationSolver
 
 
 class TestTrilaterationSolver:
@@ -69,12 +69,11 @@ class TestTrilaterationSolver:
         # Good measurement from (0,0) with weight 10
         # Bad measurement from (10,0) with wrong distance and weight 0.1
         ranges = [
-            RangeInput(ref_x=0, ref_y=0, ref_z=0,
-                       distance_m=np.sqrt(50), weight=10.0),
-            RangeInput(ref_x=10, ref_y=0, ref_z=0,
-                       distance_m=np.sqrt(50), weight=10.0),
-            RangeInput(ref_x=0, ref_y=10, ref_z=0,
-                       distance_m=np.sqrt(50) + 3.0, weight=0.1),  # bad measurement
+            RangeInput(ref_x=0, ref_y=0, ref_z=0, distance_m=np.sqrt(50), weight=10.0),
+            RangeInput(ref_x=10, ref_y=0, ref_z=0, distance_m=np.sqrt(50), weight=10.0),
+            RangeInput(
+                ref_x=0, ref_y=10, ref_z=0, distance_m=np.sqrt(50) + 3.0, weight=0.1
+            ),  # bad measurement
         ]
 
         pos = solver.solve(ranges)

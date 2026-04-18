@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
 
 from floorplan.config.models import ReferencePoint
 from floorplan.models import Position
@@ -58,7 +57,7 @@ class PositionEngine:
         distance_m: float,
         std_dev_m: float = 1.0,
         timestamp: float = 0.0,
-    ) -> Optional[Position]:
+    ) -> Position | None:
         """Add a range measurement and attempt position computation.
 
         Buffers measurements until enough reference points are available for
@@ -85,16 +84,12 @@ class PositionEngine:
             self._pending[device_id] = []
 
         # Replace existing measurement from same reference point
-        self._pending[device_id] = [
-            m for m in self._pending[device_id] if m[0] != ref_mac
-        ]
+        self._pending[device_id] = [m for m in self._pending[device_id] if m[0] != ref_mac]
         self._pending[device_id].append((ref_mac, distance_m, std_dev_m, ts))
 
         # Expire old measurements (>5 seconds)
         cutoff = ts - 5.0
-        self._pending[device_id] = [
-            m for m in self._pending[device_id] if m[3] >= cutoff
-        ]
+        self._pending[device_id] = [m for m in self._pending[device_id] if m[3] >= cutoff]
 
         # Need at least 3 reference points for 2D trilateration
         if len(self._pending[device_id]) >= 3:
@@ -104,9 +99,7 @@ class PositionEngine:
         rp = self.reference_points[ref_mac]
         return self._update_filter_range(device_id, rp, distance_m, std_dev_m, ts)
 
-    def process_ranging_result(
-        self, device_id: str, result: RangingResult
-    ) -> Optional[Position]:
+    def process_ranging_result(self, device_id: str, result: RangingResult) -> Position | None:
         """Process a RangingResult from the ranging engine."""
         return self.add_measurement(
             device_id=device_id,
@@ -116,7 +109,7 @@ class PositionEngine:
             timestamp=result.timestamp,
         )
 
-    def get_position(self, device_id: str) -> Optional[Position]:
+    def get_position(self, device_id: str) -> Position | None:
         """Get the current estimated position for a device."""
         if self.filter_type == "particle":
             pf = self._particle_filters.get(device_id)
@@ -151,9 +144,7 @@ class PositionEngine:
         # Update tracking filter with trilaterated position
         return self._update_filter_position(device_id, trilat_pos, timestamp)
 
-    def _update_filter_position(
-        self, device_id: str, pos: Position, timestamp: float
-    ) -> Position:
+    def _update_filter_position(self, device_id: str, pos: Position, timestamp: float) -> Position:
         """Update the tracking filter with a trilaterated position."""
         if self.filter_type == "particle":
             pf = self._get_or_create_particle(device_id, pos, timestamp)
@@ -175,7 +166,7 @@ class PositionEngine:
         distance_m: float,
         std_dev_m: float,
         timestamp: float,
-    ) -> Optional[Position]:
+    ) -> Position | None:
         """Update the tracking filter with a single range measurement."""
         if self.filter_type == "particle":
             pf = self._particle_filters.get(device_id)

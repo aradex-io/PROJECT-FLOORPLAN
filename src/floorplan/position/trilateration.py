@@ -55,9 +55,7 @@ class TrilaterationSolver:
         min_refs = 4 if self.use_3d else 3
         if len(ranges) < min_refs:
             if len(ranges) < 2:
-                raise ValueError(
-                    f"Need ≥{min_refs} reference points, got {len(ranges)}"
-                )
+                raise ValueError(f"Need ≥{min_refs} reference points, got {len(ranges)}")
             # Underdetermined: provide best estimate with high uncertainty
             logger.warning(
                 "Underdetermined: %d refs (need %d) — position will have high uncertainty",
@@ -77,24 +75,21 @@ class TrilaterationSolver:
 
         # Initial guess: weighted centroid of reference points
         w_sum = weights.sum()
-        x0 = np.array([
-            np.sum(refs[:, 0] * weights) / w_sum,
-            np.sum(refs[:, 1] * weights) / w_sum,
-        ])
+        x0 = np.array(
+            [
+                np.sum(refs[:, 0] * weights) / w_sum,
+                np.sum(refs[:, 1] * weights) / w_sum,
+            ]
+        )
 
         def residuals(pos: np.ndarray) -> np.ndarray:
-            computed_dists = np.sqrt(
-                (refs[:, 0] - pos[0]) ** 2 + (refs[:, 1] - pos[1]) ** 2
-            )
+            computed_dists = np.sqrt((refs[:, 0] - pos[0]) ** 2 + (refs[:, 1] - pos[1]) ** 2)
             return np.sqrt(weights) * (dists - computed_dists)
 
         result = least_squares(residuals, x0, method="lm")
 
         # Estimate uncertainty from residuals
-        if result.fun.size > 0:
-            rmse = float(np.sqrt(np.mean(result.fun**2)))
-        else:
-            rmse = float("inf")
+        rmse = float(np.sqrt(np.mean(result.fun**2))) if result.fun.size > 0 else float("inf")
 
         return Position(
             x=float(result.x[0]),
@@ -110,17 +105,17 @@ class TrilaterationSolver:
         weights = np.array([r.weight for r in ranges])
 
         w_sum = weights.sum()
-        x0 = np.array([
-            np.sum(refs[:, 0] * weights) / w_sum,
-            np.sum(refs[:, 1] * weights) / w_sum,
-            np.sum(refs[:, 2] * weights) / w_sum,
-        ])
+        x0 = np.array(
+            [
+                np.sum(refs[:, 0] * weights) / w_sum,
+                np.sum(refs[:, 1] * weights) / w_sum,
+                np.sum(refs[:, 2] * weights) / w_sum,
+            ]
+        )
 
         def residuals(pos: np.ndarray) -> np.ndarray:
             computed_dists = np.sqrt(
-                (refs[:, 0] - pos[0]) ** 2
-                + (refs[:, 1] - pos[1]) ** 2
-                + (refs[:, 2] - pos[2]) ** 2
+                (refs[:, 0] - pos[0]) ** 2 + (refs[:, 1] - pos[1]) ** 2 + (refs[:, 2] - pos[2]) ** 2
             )
             return np.sqrt(weights) * (dists - computed_dists)
 
@@ -154,7 +149,7 @@ class TrilaterationSolver:
         d_n = dists[-1]
 
         # Build linear system: A @ [x, y] = b
-        A = np.zeros((n - 1, 2))
+        A = np.zeros((n - 1, 2))  # noqa: N806
         b = np.zeros(n - 1)
 
         for i in range(n - 1):
@@ -162,9 +157,7 @@ class TrilaterationSolver:
             d_i = dists[i]
             A[i, 0] = 2 * (x_i - x_n)
             A[i, 1] = 2 * (y_i - y_n)
-            b[i] = (
-                d_n**2 - d_i**2 - x_n**2 + x_i**2 - y_n**2 + y_i**2
-            )
+            b[i] = d_n**2 - d_i**2 - x_n**2 + x_i**2 - y_n**2 + y_i**2
 
         # Solve via least squares
         result, residuals_arr, _, _ = np.linalg.lstsq(A, b, rcond=None)

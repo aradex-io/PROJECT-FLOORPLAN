@@ -130,8 +130,7 @@ def save_config(config: SiteConfig, path: str | Path) -> None:
                 "image_path": fp.image_path,
                 "floor": fp.floor,
                 "calibration_points": [
-                    {"pixel": list(cp[0]), "world": list(cp[1])}
-                    for cp in fp.calibration_points
+                    {"pixel": list(cp[0]), "world": list(cp[1])} for cp in fp.calibration_points
                 ],
                 "width_m": fp.width_m,
                 "height_m": fp.height_m,

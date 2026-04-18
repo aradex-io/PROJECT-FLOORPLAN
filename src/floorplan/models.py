@@ -5,7 +5,6 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
 
 
 class DeviceType(Enum):
@@ -35,9 +34,7 @@ class Position:
 
     def distance_to(self, other: Position) -> float:
         """Euclidean distance to another position."""
-        return (
-            (self.x - other.x) ** 2 + (self.y - other.y) ** 2 + (self.z - other.z) ** 2
-        ) ** 0.5
+        return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2 + (self.z - other.z) ** 2) ** 0.5
 
 
 @dataclass(frozen=True)
@@ -65,7 +62,7 @@ class RangingMeasurement:
     timestamp: float = field(default_factory=time.time)
     burst_index: int = 0
     ftms_per_burst: int = 0
-    is_nlos: Optional[bool] = None
+    is_nlos: bool | None = None
     nlos_confidence: float = 0.0
 
 
@@ -108,12 +105,12 @@ class DiscoveredDevice:
     """A Wi-Fi device discovered via scanning."""
 
     mac: str
-    ssid: Optional[str] = None
+    ssid: str | None = None
     channel: int = 0
     rssi_dbm: int = -100
     device_type: DeviceType = DeviceType.UNKNOWN
     ftm_capable: bool = False
-    ftm_caps: Optional[FTMCapabilities] = None
+    ftm_caps: FTMCapabilities | None = None
     first_seen: float = field(default_factory=time.time)
     last_seen: float = field(default_factory=time.time)
     supported_rates: list[float] = field(default_factory=list)
@@ -131,4 +128,4 @@ class ZoneEvent:
     event_type: str  # "enter" | "exit" | "dwell"
     position: Position
     timestamp: float = field(default_factory=time.time)
-    dwell_time_s: Optional[float] = None
+    dwell_time_s: float | None = None

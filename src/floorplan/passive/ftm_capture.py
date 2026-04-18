@@ -9,9 +9,9 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class FTMExchange:
     channel: int
     dialog_token: int
     request_timestamp: float
-    response_timestamp: Optional[float] = None
+    response_timestamp: float | None = None
     burst_count: int = 0
     last_seen: float = field(default_factory=time.time)
 
@@ -60,7 +60,7 @@ class FTMCapture:
     def __init__(self, interface: str = "wlan0mon") -> None:
         self.interface = interface
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
 
         # Observed state
         self._exchanges: dict[tuple[str, str], FTMExchange] = {}
@@ -108,7 +108,7 @@ class FTMCapture:
     def _capture_loop(self) -> None:
         """Capture loop using scapy sniff."""
         try:
-            from scapy.all import sniff, Dot11, Dot11Action, RadioTap
+            from scapy.all import Dot11, Dot11Action, RadioTap, sniff  # noqa: F401
         except ImportError:
             logger.error("scapy not available — cannot capture FTM frames")
             return
@@ -133,7 +133,7 @@ class FTMCapture:
         except Exception as e:
             logger.error("Sniff error: %s", e)
 
-    def _process_frame(self, pkt: object) -> None:
+    def _process_frame(self, pkt: Any) -> None:
         """Process a captured 802.11 frame for FTM content."""
         from scapy.all import Dot11, Dot11Action, RadioTap
 
@@ -237,8 +237,12 @@ class FTMCapture:
                     exc.response_timestamp = timestamp
 
             # Update device records
-            self._update_device(initiator, is_initiator=True, peer=responder, channel=channel, ts=timestamp)
-            self._update_device(responder, is_responder=True, peer=initiator, channel=channel, ts=timestamp)
+            self._update_device(
+                initiator, is_initiator=True, peer=responder, channel=channel, ts=timestamp
+            )
+            self._update_device(
+                responder, is_responder=True, peer=initiator, channel=channel, ts=timestamp
+            )
 
         # Notify callbacks
         exchange = self._exchanges[key]

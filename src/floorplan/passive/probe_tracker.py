@@ -6,11 +6,13 @@ networks. They reveal device presence and provide coarse RSSI-based positioning.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ class ProbeSighting:
     """A single probe request observation."""
 
     mac: str
-    ssid: Optional[str]
+    ssid: str | None
     rssi_dbm: int
     channel: int
     timestamp: float
@@ -48,7 +50,7 @@ class ProbeTracker:
         self.interface = interface
         self._max_rssi_history = max_rssi_history
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
 
         self._devices: dict[str, ProbeDevice] = {}
         self._lock = threading.Lock()
@@ -86,7 +88,7 @@ class ProbeTracker:
     def _capture_loop(self) -> None:
         """Capture probe requests using scapy."""
         try:
-            from scapy.all import sniff, Dot11, Dot11ProbeReq, Dot11Elt, RadioTap
+            from scapy.all import Dot11, Dot11Elt, Dot11ProbeReq, RadioTap, sniff  # noqa: F401
         except ImportError:
             logger.error("scapy not available for probe tracking")
             return
@@ -111,7 +113,7 @@ class ProbeTracker:
         except Exception as e:
             logger.error("Probe sniff error: %s", e)
 
-    def _process_probe(self, pkt: object) -> None:
+    def _process_probe(self, pkt: Any) -> None:
         """Process a captured probe request frame."""
         from scapy.all import Dot11, Dot11Elt, RadioTap
 
@@ -128,10 +130,8 @@ class ProbeTracker:
         elt = pkt.getlayer(Dot11Elt)
         while elt:
             if elt.ID == 0 and elt.info:
-                try:
+                with contextlib.suppress(Exception):
                     ssid = elt.info.decode("utf-8", errors="ignore")
-                except Exception:
-                    pass
                 break
             elt = elt.payload.getlayer(Dot11Elt) if elt.payload else None
 
@@ -171,7 +171,7 @@ class ProbeTracker:
                 dev.channels_seen.add(channel)
             dev.rssi_history.append((now, rssi))
             if len(dev.rssi_history) > self._max_rssi_history:
-                dev.rssi_history = dev.rssi_history[-self._max_rssi_history:]
+                dev.rssi_history = dev.rssi_history[-self._max_rssi_history :]
 
         for cb in self._callbacks:
             try:

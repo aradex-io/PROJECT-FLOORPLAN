@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_app(
-    static_dir: Optional[str] = None,
+    static_dir: str | None = None,
     cors_origins: list[str] | None = None,
 ) -> FastAPI:
     """Create and configure the FastAPI application."""

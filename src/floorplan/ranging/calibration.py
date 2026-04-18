@@ -6,7 +6,6 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -74,7 +73,7 @@ class RangingCalibrator:
 
     def __init__(self) -> None:
         self._profiles: dict[str, CalibrationProfile] = {}
-        self._active_profile: Optional[CalibrationProfile] = None
+        self._active_profile: CalibrationProfile | None = None
 
     def add_profile(self, profile: CalibrationProfile) -> None:
         """Register a calibration profile."""
@@ -93,7 +92,7 @@ class RangingCalibrator:
         *,
         rssi_dbm: int = 0,
         is_nlos: bool = False,
-        profile_name: Optional[str] = None,
+        profile_name: str | None = None,
     ) -> float:
         """Apply calibration correction to a distance measurement."""
         profile = self._active_profile
